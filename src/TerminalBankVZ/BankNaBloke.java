@@ -6,13 +6,12 @@ import java.util.Scanner;
 
 public class BankNaBloke {
     private static final String NAME_COMPANY = "NA BLOKE";
-    private static ArrayList<Integer> history = new ArrayList<>();
+    private final static ArrayList<Integer> history = new ArrayList<>();
     private static double MY_BALANCE = 1000.0;
 
-    public static void main(String[] args) {
+    static void main() {
         Scanner scanner = new Scanner(System.in);
         HashMap<String, Integer> userBank = new HashMap<>();
-        BankNaBloke myMoney = new BankNaBloke();
         userBank.put("Алиса", 500);
         userBank.put("Иван", 500);
         userBank.put("Кирилл", 500);
@@ -75,11 +74,11 @@ public class BankNaBloke {
                     break;
                 // 9. Выход
                 case 9:
-                    System.out.println("Выход из системы...");
+                    System.err.println("Выход из системы...");
                     isActive = false;
                     break;
                 default:
-                    System.out.println("Неизвестная операция" + TransactionStatusVZ.STATUS_ERROR);
+                    System.err.println("Неизвестная операция " + TransactionStatusVZ.STATUS_ERROR);
             }
         }
 
@@ -108,8 +107,8 @@ public class BankNaBloke {
     // 3. Показать историю операций
     private static void forOperation() {
         System.out.println("Список всех операций");
-        for (int i = 0; i < history.size(); i++) {
-            System.out.println(history.get(i));
+        for (Integer integer : history) {
+            System.out.println(integer);
         }
     }
 
@@ -181,11 +180,6 @@ public class BankNaBloke {
             return TransactionStatusVZ.STATUS_SUCCESSFULLY;
         }
         return TransactionStatusVZ.STATUS_USER_ABSENCE;
-    }
-
-    // 4. Показать баланс
-    public void setBalance(double balance) {
-        this.MY_BALANCE = MY_BALANCE;
     }
 
     public static double getMyBalance() {
