@@ -6,7 +6,7 @@ import java.util.Scanner;
 
 public class BankNaBloke {
     private static final String NAME_COMPANY = "NA BLOKE";
-    private final static ArrayList<Integer> history = new ArrayList<>();
+    private static final ArrayList<Integer> history = new ArrayList<>();
     private static double MY_BALANCE = 1000.0;
 
     static void main() {
