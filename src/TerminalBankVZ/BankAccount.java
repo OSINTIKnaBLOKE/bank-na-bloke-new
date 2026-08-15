@@ -1,7 +1,5 @@
 package TerminalBankVZ;
 
-import java.util.Scanner;
-
 public class BankAccount {
     private String accountOwner;
     private double accountBalance;
@@ -17,10 +15,6 @@ public class BankAccount {
 
     public String getAccountOwner() {
         return accountOwner;
-    }
-
-    public void setAccountBalance(double accountBalance) {
-        this.accountBalance = accountBalance;
     }
 
     public void addMoney(double amount){
