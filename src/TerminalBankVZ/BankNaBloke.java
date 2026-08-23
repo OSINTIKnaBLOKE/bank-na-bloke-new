@@ -3,6 +3,7 @@ package TerminalBankVZ;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -21,19 +22,18 @@ public class BankNaBloke {
 
         boolean isActive = true;
         System.out.println("Добро пожаловать в банк " + NAME_COMPANY);
-        // TODO регистрацию потом
         register(scanner, userBank);
 
         String menu = """
-                1. Пополнить баланс              6. Показать баланс пользователя
-                2. Снять наличные                7. Заблокировать пользователя
-                3. Показать историю операций     8. Перевести деньги другому пользователю
-                4. Показать баланс               9. Выход
-                5. Показать пользователей        10. Перевод между пользователями          
-        """;
+                        1. Пополнить баланс              6. Показать баланс пользователя
+                        2. Снять наличные                7. Заблокировать пользователя
+                        3. Показать историю операций     8. Перевести деньги другому пользователю    0 - купить подписку
+                        4. Показать баланс               9. Выход
+                        5. Показать пользователей        10. Перевод между пользователями          
+                """;
 
         while (isActive) {
-            // FIXME: Формат времини
+
             LocalDateTime time = LocalDateTime.now();
             System.out.println(" ");
             System.out.println("                               === " + NAME_COMPANY + " ===");
@@ -44,7 +44,10 @@ public class BankNaBloke {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm.ss");
 
             switch (inputMenu) {
-                // 1. Пополнить баланс (себе)
+                // купить подписку 0
+                case 0:
+                    buyPremium(userBank, scanner);
+                    // 1. Пополнить баланс (себе)
                 case 1:
                     depositAmount(scanner, time);
                     break;
@@ -91,7 +94,17 @@ public class BankNaBloke {
 
     }
 
-    // переделать переводы
+    private static void buyPremium(HashMap<String, BankAccount> userBank, Scanner scanner) {
+        System.out.println("Кто покупает подписку: ");
+        String input = scanner.nextLine();
+
+        if (userBank.containsKey(input)) {
+            BankAccount account = userBank.get(input);
+            account.buyPremium(scanner, account);
+        }
+    }
+
+    // переделать переводы (потом)
     private static void transactionUserForUser(HashMap<String, BankAccount> userBank, Scanner scanner) {
         loadDatabase(userBank);
         System.out.println("Кто переводит?");
@@ -128,7 +141,7 @@ public class BankNaBloke {
             return;
         }
 
-        BankAccount newUserBank = new BankAccount(accOwner, MY_BALANCE); // отталкиваться от этого наверное
+        BankAccount newUserBank = new BankAccount(accOwner, MY_BALANCE, null); // отталкиваться от этого наверное
         userBank.put(accOwner, newUserBank);
         System.out.println("Пользователь " + accOwner + " Успешно зарегистрирован!");
         System.out.println(TransactionStatusVZ.STATUS_SUCCESSFULLY);
@@ -162,7 +175,7 @@ public class BankNaBloke {
         return TransactionStatusVZ.STATUS_USER_ABSENCE;
     }
 
-    private static void databaseUser(HashMap<String, BankAccount> user){
+    private static void databaseUser(HashMap<String, BankAccount> user) {
         Path path = Path.of("src/TerminalBankVZ/bankDatabase.txt");
 
         try {
@@ -177,7 +190,7 @@ public class BankNaBloke {
                 String[] data = line.split(";");
                 String name = data[0];
                 double balance = Double.parseDouble(data[1]);
-                System.out.println("Имя " + name + " Баланс " + balance);
+                System.out.println("Имя " + name + " Баланс " + balance + " статус подписки " + user.get(name).isPremiumActive());
             }
 
             System.out.println("Пользователей в базе " + list.size());
@@ -199,7 +212,7 @@ public class BankNaBloke {
         System.out.println("Сколько снять?: ");
         double anAmountMoney = scanner.nextDouble();
         scanner.nextLine();
-        anAmountTransaction(anAmountMoney, localDateTime);
+        anAmountTransaction(anAmountMoney, localDateTime, true);
     }
 
     // 6. Показать баланс пользователей
@@ -216,39 +229,65 @@ public class BankNaBloke {
         System.out.print("Пополнить баланс на ");
         double depositAmount = scanner.nextDouble();
         scanner.nextLine();
-        System.out.println("Деньги усмешно зачислены: " + depStatusVZ(depositAmount, localDateTime));
+        System.out.println("Деньги усмешно зачислены: " + depStatusVZ(depositAmount, localDateTime, true) + " " + text);
     }
 
     // Проверкка на снятие
     // доп ко 2
-    private static TransactionStatusVZ anAmountTransaction(double anAmountMoney, LocalDateTime localDateTime) {
+    private static TransactionStatusVZ anAmountTransaction(double anAmountMoney, LocalDateTime localDateTime, boolean isPremium) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss");
-        if (anAmountMoney > MY_BALANCE) {
-            return TransactionStatusVZ.INSUFFICIENT_FIND;
-        }
-        if (anAmountMoney >= 50_000) {
-            return TransactionStatusVZ.LIMIT_EXCEEDED;
-        }
 
-        String txt = localDateTime.format(formatter);
+        if (isPremium) {
+            if (anAmountMoney > MY_BALANCE) {
+                return TransactionStatusVZ.INSUFFICIENT_FIND;
+            }
+            if (anAmountMoney >= 100_000) {
+                return TransactionStatusVZ.LIMIT_EXCEEDED;
+            }
+            String txt = localDateTime.format(formatter);
 
-        MY_BALANCE -= anAmountMoney;
-        HISTORY.put(-anAmountMoney, txt);
+            MY_BALANCE -= anAmountMoney;
+            HISTORY.put(-anAmountMoney, txt);
+            return TransactionStatusVZ.STATUS_SUCCESSFULLY;
+        } else {
+            if (anAmountMoney > MY_BALANCE) {
+                return TransactionStatusVZ.INSUFFICIENT_FIND;
+            }
+            if (anAmountMoney >= 50_000) {
+                return TransactionStatusVZ.LIMIT_EXCEEDED;
+            }
+            String txt = localDateTime.format(formatter);
+
+            MY_BALANCE -= anAmountMoney;
+            HISTORY.put(-anAmountMoney, txt);
+        }
         return TransactionStatusVZ.STATUS_SUCCESSFULLY;
     }
 
     // доп к 1
-    private static TransactionStatusVZ depStatusVZ(double depAmount, LocalDateTime localDateTime) {
+    private static TransactionStatusVZ depStatusVZ(double depAmount, LocalDateTime localDateTime, boolean isPremium) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss");
-        if (depAmount < 0) {
-            return TransactionStatusVZ.INVALID_AMOUNT;
+        if (isPremium) {
+            if (depAmount < 0) {
+                return TransactionStatusVZ.INVALID_AMOUNT;
+            }
+            if (depAmount >= 100_000) {
+                return TransactionStatusVZ.INVALID_AMOUNT;
+            }
+            String text = localDateTime.format(formatter);
+            MY_BALANCE += depAmount;
+            HISTORY.put(depAmount, text);
+        } else {
+            if (depAmount < 0) {
+                return TransactionStatusVZ.INVALID_AMOUNT;
+            }
+            if (depAmount >= 50_000) {
+                return TransactionStatusVZ.INVALID_AMOUNT;
+            }
+            String text = localDateTime.format(formatter);
+            MY_BALANCE += depAmount;
+            HISTORY.put(depAmount, text);
         }
-        if (depAmount >= 50_000) {
-            return TransactionStatusVZ.INVALID_AMOUNT;
-        }
-        String text = localDateTime.format(formatter);
-        MY_BALANCE += depAmount;
-        HISTORY.put(depAmount, text);
         return TransactionStatusVZ.STATUS_SUCCESSFULLY;
     }
 
@@ -274,7 +313,7 @@ public class BankNaBloke {
         System.out.print("Сумма: ");
         double deposit = scanner.nextDouble();
 
-        if (deposit > 0 && deposit <= 50_000) {
+        if (deposit > 0 && deposit <= 50_000 && user.isPremiumActive()) {
             if (user.getBalance() > 0) {
                 user.subtractMoney(deposit);
                 user1.addMoney(deposit);
@@ -300,6 +339,8 @@ public class BankNaBloke {
                     .append(";")
                     .append(account.getBalance())
                     .append(";")
+                    .append(account.isPremiumActive())
+                    .append(";")
                     .append(text)
                     .append("\n");
         }
@@ -311,7 +352,7 @@ public class BankNaBloke {
             System.err.println("Ошибка при сохранении базы: " + e.getMessage());
         }
     }
-
+    // ПОТОМ НОРМ СДЕЛАТЬ(БД) ЧТО ТУТ ДЕЛАТЬ?
     private static void loadDatabase(HashMap<String, BankAccount> userBank) {
         Path path = Path.of("src/TerminalBankVZ/bankDatabase.txt");
 
@@ -334,16 +375,11 @@ public class BankNaBloke {
                 String name = data[0];
                 double balance = Double.parseDouble(data[1]);
 
-                userBank.put(name, new BankAccount(name, balance));
+                userBank.put(name, new BankAccount(name, balance, null));
             }
 
         } catch (IOException e) {
             System.err.println("Ошибка при загрузке файла " + e.getMessage());
         }
-    }
-
-    //сделать подписку на больший перевод
-    private static void transactionHistory(BankAccount userBank){
-
     }
 }
