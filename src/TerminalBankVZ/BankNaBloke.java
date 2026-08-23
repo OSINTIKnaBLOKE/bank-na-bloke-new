@@ -47,6 +47,7 @@ public class BankNaBloke {
                 // купить подписку 0
                 case 0:
                     buyPremium(userBank, scanner);
+                    break;
                     // 1. Пополнить баланс (себе)
                 case 1:
                     depositAmount(scanner, time);

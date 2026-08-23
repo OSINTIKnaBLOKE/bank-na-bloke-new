@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
-public class BankAccount extends BankNaBloke{
+public class BankAccount {
     private String accountOwner;
     private double accountBalance;
     private LocalDate subscriptionEndData;
@@ -15,7 +15,7 @@ public class BankAccount extends BankNaBloke{
                 LocalDate subscriptionEndData) {
         this.accountOwner = accountOwner;
         this.accountBalance = accountBalance;
-        this.subscriptionEndData = null;
+        this.subscriptionEndData = subscriptionEndData;
     }
 
     public double getBalance() {
