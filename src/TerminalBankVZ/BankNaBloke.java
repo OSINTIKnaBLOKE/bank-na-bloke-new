@@ -264,7 +264,7 @@ public class BankNaBloke {
         return TransactionStatusVZ.STATUS_SUCCESSFULLY;
     }
 
-    // доп к 1
+    // доп к 1-ому
     private static TransactionStatusVZ depStatusVZ(double depAmount, LocalDateTime localDateTime, boolean isPremium) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss");
         if (isPremium) {

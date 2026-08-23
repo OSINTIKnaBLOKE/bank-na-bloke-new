@@ -8,4 +8,5 @@ public enum TransactionStatusVZ {
     INSUFFICIENT_FIND, // недостаточно средств
     INVALID_AMOUNT, // неверная сумма
     LIMIT_EXCEEDED, // превышен лимит на разовое снятие
+    // что то еще добавить
 }

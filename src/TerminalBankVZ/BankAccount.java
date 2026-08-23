@@ -40,6 +40,7 @@ public class BankAccount extends BankNaBloke{
 
     // покупка подписки
     public void buyPremium(Scanner scanner, BankAccount userBank){
+
         System.out.println("Подписка на 1 месяц: 1000.00");
         System.out.println("Подписка на 3 месяца: 3000.00");
         System.out.println("Подписка на 6 месяцев: 6000.00");
