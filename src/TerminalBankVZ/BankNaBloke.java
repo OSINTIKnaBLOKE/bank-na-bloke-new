@@ -3,19 +3,19 @@ package TerminalBankVZ;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Scanner;
 
 public class BankNaBloke {
+
     private static final String NAME_COMPANY = "NA BLOKE";
-    private static final HashMap<Double, String> HISTORY = new HashMap<>();
-    private static final HashMap<BankAccount, LocalDateTime> HISTORY_USER = new HashMap<>();
+    private static HashMap<Double, String> HISTORY = new HashMap<>();
+    private static HashMap<BankAccount, LocalDateTime> HISTORY_USER = new HashMap<>();
     private static double MY_BALANCE = 1000.0;
 
-    static void main() {
+    static void main() throws InsufficientFindException, IOException, NotUsersException{
         Scanner scanner = new Scanner(System.in);
         HashMap<String, BankAccount> userBank = new HashMap<>();
         loadDatabase(userBank);
@@ -23,6 +23,7 @@ public class BankNaBloke {
         boolean isActive = true;
         System.out.println("Добро пожаловать в банк " + NAME_COMPANY);
         register(scanner, userBank);
+
 
         String menu = """
                         1. Пополнить баланс              6. Показать баланс пользователя
@@ -106,7 +107,13 @@ public class BankNaBloke {
     }
 
     // переделать переводы (потом)
-    private static void transactionUserForUser(HashMap<String, BankAccount> userBank, Scanner scanner) {
+    /**
+     * @return нечего
+     * @throws IOException - исключение при вызове loadDatabase
+     * @throws NotUsersException - если пользователь не найден или не существует
+     * */
+
+    private static void transactionUserForUser(HashMap<String, BankAccount> userBank, Scanner scanner) throws IOException, NotUsersException{
         loadDatabase(userBank);
         System.out.println("Кто переводит?");
         String inputUser = scanner.nextLine();
@@ -116,40 +123,56 @@ public class BankNaBloke {
             if (userBank.containsKey(inputUser1)) {
                 BankAccount user = userBank.get(inputUser);
                 BankAccount user1 = userBank.get(inputUser1);
+                try {
+                    fundsTransfer(scanner, user, user1);
+                } catch (InsufficientFindException e) {
+                    System.out.println(e.getMessage());
 
-                fundsTransfer(scanner, user, user1);
+                }
+
             } else {
-                System.err.println(TransactionStatusVZ.STATUS_USER_ABSENCE);
+                throw new NotUsersException("Пользователь отсутствует!");
             }
         } else {
-            System.err.println(TransactionStatusVZ.STATUS_USER_ABSENCE);
+            throw new NotUsersException("Пользователь отсутствует!");
         }
     }
 
-    private static void register(Scanner scanner, HashMap<String, BankAccount> userBank) {
+    /**
+     * Метод для регистрации нового пользователя
+     * @throws NotUsersException - Если пользователь ввел пустое имя или совпадение по имени
+     * @return - добавляет пользователя в БД
+     * */
+
+    private static void register(Scanner scanner, HashMap<String, BankAccount> userBank) throws NotUsersException{
         System.out.println("Введите ваше имя для регистрации: ");
         String accOwner = scanner.nextLine();
 
         if (accOwner.trim().isEmpty()) {
-            System.err.println("Ошибка! Имя не может быть пустым!");
-            System.err.println(TransactionStatusVZ.STATUS_ERROR);
-            return;
+            throw new NotUsersException("Ошибка! Имя не может быть пустым!");
         }
 
         if (userBank.containsKey(accOwner)) {
-            System.err.println("Ошибка! пользователь с таким именем уже существует!");
-            System.err.println(TransactionStatusVZ.STATUS_ERROR);
-            return;
+            throw new NotUsersException("Ошибка! пользователь с таким именем уже существует!");
         }
 
-        BankAccount newUserBank = new BankAccount(accOwner, MY_BALANCE, null); // отталкиваться от этого наверное
+        BankAccount newUserBank = new BankAccount(accOwner, MY_BALANCE, null);
         userBank.put(accOwner, newUserBank);
         System.out.println("Пользователь " + accOwner + " Успешно зарегистрирован!");
         System.out.println(TransactionStatusVZ.STATUS_SUCCESSFULLY);
     }
 
+    /**
+     * Метод для перевода с личного счета на счет получателя
+     * @return Возращает статус переведо
+     * @throws IOException - исключение при вызове метода loadDatabase
+     * @throws NotUsersException - исключение при отсутствии пользователя
+     * @throws InsufficientFindException - недостаточно средств или неверная сумма
+     * */
+
     private static TransactionStatusVZ transactionMeAndUser(HashMap<String, BankAccount> userBank,
-                                                            Scanner scanner, LocalDateTime localDateTime) {
+                                                            Scanner scanner,
+                                                            LocalDateTime localDateTime) throws IOException, NotUsersException, InsufficientFindException{
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss");
         String text = localDateTime.format(formatter);
         loadDatabase(userBank);
@@ -170,10 +193,10 @@ public class BankNaBloke {
 
                 userBank.put(userNameTransaction, currentRecipientBalance);
             } else {
-                return TransactionStatusVZ.INSUFFICIENT_FIND;
+                throw new InsufficientFindException("Недостаточно средст");
             }
         }
-        return TransactionStatusVZ.STATUS_USER_ABSENCE;
+        throw new NotUsersException("Пользователь не найден!");
     }
 
     private static void databaseUser(HashMap<String, BankAccount> user) {
@@ -309,7 +332,7 @@ public class BankNaBloke {
         return MY_BALANCE;
     }
 
-    private static void fundsTransfer(Scanner scanner, BankAccount user, BankAccount user1) {
+    private static void fundsTransfer(Scanner scanner, BankAccount user, BankAccount user1) throws InsufficientFindException {
         System.out.println("Пользователь " + user.getAccountOwner() + " Переводит деньги " + user1.getAccountOwner());
         System.out.print("Сумма: ");
         double deposit = scanner.nextDouble();
@@ -321,7 +344,7 @@ public class BankNaBloke {
 
                 System.out.println(TransactionStatusVZ.STATUS_SUCCESSFULLY);
             } else {
-                System.err.println(TransactionStatusVZ.INSUFFICIENT_FIND);
+                throw new InsufficientFindException("недостаточно средст!");
             }
         } else {
             System.out.println(TransactionStatusVZ.INVALID_AMOUNT);
@@ -354,7 +377,7 @@ public class BankNaBloke {
         }
     }
     // ПОТОМ НОРМ СДЕЛАТЬ(БД) ЧТО ТУТ ДЕЛАТЬ?
-    private static void loadDatabase(HashMap<String, BankAccount> userBank) {
+    private static void loadDatabase(HashMap<String, BankAccount> userBank) throws IOException {
         Path path = Path.of("src/TerminalBankVZ/bankDatabase.txt");
 
         if (!Files.exists(path)) {
@@ -384,3 +407,6 @@ public class BankNaBloke {
         }
     }
 }
+
+// Разработчик устал уже писать и переделывать этот код
+//

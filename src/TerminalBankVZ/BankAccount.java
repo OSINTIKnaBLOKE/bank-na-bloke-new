@@ -12,7 +12,8 @@ public class BankAccount {
 
     BankAccount(String accountOwner,
                 double accountBalance,
-                LocalDate subscriptionEndData) {
+                LocalDate subscriptionEndData)
+    {
         this.accountOwner = accountOwner;
         this.accountBalance = accountBalance;
         this.subscriptionEndData = subscriptionEndData;
