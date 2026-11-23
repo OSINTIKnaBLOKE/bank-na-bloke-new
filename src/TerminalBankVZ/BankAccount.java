@@ -96,7 +96,5 @@ public class BankAccount {
     public void setSubscriptionEndData(LocalDate subscriptionEndData) {
         this.subscriptionEndData = subscriptionEndData;
     }
-
-
 }
 
